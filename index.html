@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Chef's Alcohol Burn-off Calc</title>
+    <style>
+        :root {
+            --primary-color: #e63946;
+            --bg-color: #f1faee;
+            --card-bg: #ffffff;
+            --text-color: #1d3557;
+        }
+
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container { 
+            width: 90%;
+            max-width: 400px; 
+            padding: 30px; 
+            background: var(--card-bg);
+            border-radius: 20px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        h2 { 
+            margin-top: 0; 
+            font-size: 1.5rem;
+            text-align: center;
+            color: var(--primary-color);
+        }
+
+        label {
+            display: block;
+            margin-top: 15px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        input { 
+            padding: 12px; 
+            margin-bottom: 10px; 
+            width: 100%; 
+            box-sizing: border-box; 
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px; /* Prevents iOS zoom on focus */
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        button { 
+            padding: 15px; 
+            margin-top: 20px; 
+            width: 100%; 
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            active-transform: translateY(2px);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        #result { 
+            margin-top: 25px; 
+            text-align: center;
+            font-size: 1.2rem;
+            padding: 15px;
+            border-radius: 10px;
+            background: #f8f9fa;
+            min-height: 1.5em;
+        }
+
+        .unit {
+            font-weight: normal;
+            font-size: 0.8rem;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Cooking Alcohol Solver</h2>
+    
+    <label for="V_i">Alcohol Volume <span class="unit">(ml)</span></label>
+    <input type="number" id="V_i" inputmode="decimal" placeholder="e.g., 5">
+    
+    <label for="ABV">Alcohol Content <span class="unit">(ABV %)</span></label>
+    <input type="number" id="ABV" inputmode="decimal" placeholder="e.g., 15">
+    
+    <label for="S">Number of Serves</label>
+    <input type="number" id="S" inputmode="numeric" placeholder="e.g., 2">
+    
+    <button onclick="solveEquation()">Calculate Time</button>
+    
+    <div id="result">---</div>
+</div>
+
+<script>
+const dataset = [
+    { t: 0, rem: 1.0 },
+    { t: 1, rem: 0.85 },
+    { t: 15, rem: 0.4 },
+    { t: 30, rem: 0.35 },
+    { t: 60, rem: 0.25 },
+    { t: 120, rem: 0.1 },
+    { t: 150, rem: 0.05 }
+];
+
+function solveEquation() {
+    const V_i = parseFloat(document.getElementById('V_i').value);
+    const ABV = parseFloat(document.getElementById('ABV').value);
+    const S = parseFloat(document.getElementById('S').value);
+    const resultDiv = document.getElementById('result');
+
+    if (isNaN(V_i) || isNaN(ABV) || isNaN(S)) {
+        resultDiv.style.color = "red";
+        resultDiv.innerText = 'Please fill in all fields.';
+        return;
+    }
+    
+    // Formula logic
+    const targetY = (1.5 * S / V_i / ABV * 100);
+    const t = inverseInterpolate(targetY, dataset);
+    
+    resultDiv.style.color = "#1d3557";
+    
+    if (t === null) {
+        resultDiv.innerText = "No simmer time needed!";
+    } else if (t > 150) {
+        resultDiv.innerText = "Requires > 2.5 hours of simmering.";
+    } else {
+        resultDiv.innerHTML = `Simmer for at least<br><strong>${Math.ceil(t)} minutes</strong>`;
+    }
+}
+
+function inverseInterpolate(y, data) {
+    if (y >= data[0].rem) return null;
+    if (y <= data[data.length - 1].rem) return 999;
+
+    for (let i = 0; i < data.length - 1; i++) {
+        const p1 = data[i];
+        const p2 = data[i + 1];
+
+        if (y <= p1.rem && y >= p2.rem) {
+            const rem_diff = p2.rem - p1.rem;
+            const t_diff = p2.t - p1.t;
+            const y_offset = y - p1.rem;
+            return p1.t + (y_offset * t_diff) / rem_diff;
+        }
+    }
+    return null;
+}
+</script>
+
+</body>
+</html>
